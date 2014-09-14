@@ -71,7 +71,6 @@
             
         } else {
             indexInString = MIN(rangeChrLowercase.location, rangeChrUppercase.location);
-            
         }
         
         // Set base score for matching chr

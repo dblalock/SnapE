@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7212D57C19C6401600BE7672 /* NSString+Score.m in Sources */ = {isa = PBXBuildFile; fileRef = 7212D57B19C6401600BE7672 /* NSString+Score.m */; };
 		7462256B173DCADA003EE853 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7462256A173DCADA003EE853 /* UIKit.framework */; };
 		7462256D173DCADA003EE853 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7462256C173DCADA003EE853 /* Foundation.framework */; };
 		7462256F173DCADA003EE853 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7462256E173DCADA003EE853 /* CoreGraphics.framework */; };
@@ -28,6 +29,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7212D57A19C6401600BE7672 /* NSString+Score.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+Score.h"; sourceTree = "<group>"; };
+		7212D57B19C6401600BE7672 /* NSString+Score.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+Score.m"; sourceTree = "<group>"; };
 		74622567173DCADA003EE853 /* OCR-Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OCR-Example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7462256A173DCADA003EE853 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		7462256C173DCADA003EE853 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -255,6 +258,8 @@
 				7462258E173DCD74003EE853 /* ResultsViewController.mm */,
 				746226E4173DDDC9003EE853 /* ImageProcessing.h */,
 				746226E5173DDDC9003EE853 /* ImageProcessing.mm */,
+				7212D57A19C6401600BE7672 /* NSString+Score.h */,
+				7212D57B19C6401600BE7672 /* NSString+Score.m */,
 				74622571173DCADA003EE853 /* Supporting Files */,
 			);
 			path = "OCR-Example";
@@ -552,6 +557,7 @@
 				7462258F173DCD74003EE853 /* ResultsViewController.mm in Sources */,
 				746226E6173DDDC9003EE853 /* ImageProcessing.mm in Sources */,
 				74622787173DEE86003EE853 /* Tesseract.mm in Sources */,
+				7212D57C19C6401600BE7672 /* NSString+Score.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
