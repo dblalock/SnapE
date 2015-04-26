@@ -1,0 +1,11 @@
+
+streamline UI so that it goes:
+	launch -> camera -> use photo button -> (superimposed ocr progress indicator) -> event entry
+
+X since this is really just a camera thing that then shows an event thing, just do everything but the event part in one view controller
+
+------------------------
+
+So the streamlining part is working, except that there's no event entry component
+
+It currenlty never finds anything because apparently the image is null until we render it somehow

@@ -18,6 +18,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+	[self choosePhoto];
 	// Do any additional setup after loading the view, typically from a nib.
 }
 
@@ -70,21 +71,25 @@
     
 }
 
+-(void) choosePhoto {
+	UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
+	imagePickerController.delegate = self;
+	
+	if ([UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear]) {
+		imagePickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+		imagePickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureModePhoto;
+	}
+	else {
+		imagePickerController.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+	}
+	
+	[self presentViewController:imagePickerController
+					   animated:YES
+					 completion:nil];
+}
+
 - (IBAction)choosePhotoWasTapped:(id)sender {
-    UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
-    imagePickerController.delegate = self;
-    
-    if ([UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear]) {
-        imagePickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
-        imagePickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureModePhoto;
-    }
-    else {
-        imagePickerController.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
-    }
-    
-    [self presentViewController:imagePickerController
-                       animated:YES
-                     completion:nil];
+	[self choosePhoto];
 }
 
 @end

@@ -1,0 +1,11 @@
+
+- Merge/verify string manipulation code
+- a better hexdump
+- merge tcp socket classes + iostreams code
+- Better backtrace code (+ windows)
+- Add Amazon S3 code to network
+- fix install file-numbers dest directories
+- Add sample code
+- Add text file manipulation code (interpreter, CSV, etc)
+- Revise codegen + reformatter to use this library. 
+- Unit tests! Unit tests! Unit tests!

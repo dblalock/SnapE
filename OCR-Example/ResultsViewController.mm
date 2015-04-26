@@ -9,70 +9,95 @@
 #import "ResultsViewController.h"
 #import "Tesseract.h"
 #import "ImageProcessing.h"
+#import "TextProcessor.hpp"
+#import "ImageUtils.h"
+#import "NSString+CppString.h"
 
 @interface ResultsViewController ()
-
+- (void) processText:(NSString*)text;
 @end
 
-@implementation ResultsViewController
+@implementation ResultsViewController {
+//	__block Tesseract* tesseract;
+	Tesseract* tesseract;
+}
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
+- (id)initWithNibName:(NSString*)nibNameOrNil bundle:(NSBundle*)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
-        // Custom initialization
+        tesseract = [[Tesseract alloc] initWithDataPath:@"/tessdata" language:@"eng"];
+		// Only search for alpha-numeric characters.
+		[tesseract setVariableValue:@"-/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" forKey:@"tessedit_char_whitelist"];
     }
     return self;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
+
+//-(void)takePhoto {
+//	UIImagePickerController *imagePickerController = [[UIImagePickerController alloc] init];
+//	if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+//		[imagePickerController setSourceType:UIImagePickerControllerSourceTypeCamera];
+//	}
+//	// image picker needs a delegate,
+//	[imagePickerController setDelegate:self];
+//	// Place image picker on the screen
+//	[self presentViewController:imagePickerController animated:YES completion:nil];
+//}
+//
+//-(void)chooseFromLibrary {
+//	UIImagePickerController *imagePickerController= [[UIImagePickerController alloc]init];
+//	[imagePickerController setSourceType:UIImagePickerControllerSourceTypePhotoLibrary];
+//	// image picker needs a delegate so we can respond to its messages
+//	[imagePickerController setDelegate:self];
+//	// Place image picker on the screen
+//	[self presentViewController:imagePickerController animated:YES completion:nil];
+//}
+//
+////delegate methode will be called after picking photo either from camera or library
+//- (void)imagePickerController:(UIImagePickerController *)picker
+//didFinishPickingMediaWithInfo:(NSDictionary *)info {
+//	[self dismissViewControllerAnimated:YES completion:nil];
+//	UIImage *image = [info objectForKey:UIImagePickerControllerOriginalImage];
+//	[myImageView setImage:image];    // "myImageView" name of any UImageView.
+//}
+
+- (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    
-    // Process the image.
-    // Ideally, this shouldn't happen everytime the view appears but its a
-    // sample.
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        __block Tesseract* tesseract = [[Tesseract alloc] initWithDataPath:@"/tessdata" language:@"eng"];
-        
-        // Uncomment to only search for alpha-numeric characters.
-        [tesseract setVariableValue:@"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" forKey:@"tessedit_char_whitelist"];
-        
-        // Shrink the image. Tesseract works better with smaller images than what the iPhone puts out.
-        CGSize newSize = CGSizeMake(self.selectedImage.size.width / 3, self.selectedImage.size.height / 3);
-        UIGraphicsBeginImageContextWithOptions(newSize, NO, 0.0);
-        [self.selectedImage drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-        UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        
-        ImageWrapper *greyScale=Image::createImage(resizedImage, resizedImage.size.width, resizedImage.size.height);        
-        ImageWrapper *edges = greyScale.image->autoLocalThreshold();
-        
-        [tesseract setImage:edges.image->toUIImage()];
-        [tesseract recognize];
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [UIView animateWithDuration:0.3
-                             animations:^{
-                                 self.loadingView.alpha = 0.0;
-                             }
-                             completion:^(BOOL finished) {
-                                 self.loadingView.hidden = YES;
-                                 [self.resultsTextView setText:[tesseract recognizedText]];
-                             }];
-        });
-    });
+	[self ocrMyImage];
 }
 
-- (void)didReceiveMemoryWarning
-{
+- (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(void) ocrMyImage {
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+		NSString* text = ocrImage(tesseract, self.selectedImage);
+		
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[UIView animateWithDuration:0.3
+							 animations:^{
+								 self.loadingView.alpha = 0.0;
+							 }
+							 completion:^(BOOL finished) {
+								 self.loadingView.hidden = YES;
+								 [self processText:text];
+							 }];
+		});
+	});
+}
+
+- (void) processText:(NSString*)text {
+	if (text == nil) { return; }
+	TextProcessor tp;
+	tp.processText([text toCppString]);
+	NSLog(@"processing text: %@", text);
+	[self.resultsTextView setText:[tesseract recognizedText]];
 }
 
 @end
