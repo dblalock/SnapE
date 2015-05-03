@@ -12,32 +12,55 @@
 #import "ImageProcessing.h"
 #import "TextProcessor.hpp"
 #import "ImageUtils.h"
+#import "EventManager.h"
 #import "NSString+CppString.h"
 
-@interface MainViewController () <UINavigationControllerDelegate, UIImagePickerControllerDelegate>
+#import <EventKit/EventKit.h>
+#import <EventKitUI/EventKitUI.h>
+
+@interface MainViewController () <UINavigationControllerDelegate,
+	UIImagePickerControllerDelegate,EKEventEditViewDelegate>
 @property (nonatomic, strong) UIImage *selectedImage;
 @property (nonatomic, strong) UIView *loadingView;
 
 @property (weak, nonatomic) IBOutlet UIImageView *selectedImageView;
+
+@property (nonatomic, strong) EventManager *eventManager;
+@property(nonatomic) BOOL didShowCamera;
+
 @end
 
 @implementation MainViewController {
 	Tesseract* tesseract;
 }
 
-- (id)initWithNibName:(NSString*)nibNameOrNil bundle:(NSBundle*)nibBundleOrNil {
-	self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+//- (id)initWithNibName:(NSString*)nibNameOrNil bundle:(NSBundle*)nibBundleOrNil {
+//	self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+-(void) awakeFromNib {
+	[super awakeFromNib];
+	NSLog(@"initing mainViewController");
 	if (self) {
+		self.didShowCamera = NO;
+		self.eventManager = [[EventManager alloc] init];
+		
+		NSLog(@"eventMgr: %@, eventStore: %@", self.eventManager, self.eventManager.eventStore);
+		
 		tesseract = [[Tesseract alloc] initWithDataPath:@"/tessdata" language:@"eng"];
 		// Only search for alpha-numeric characters.
 		[tesseract setVariableValue:@"-/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" forKey:@"tessedit_char_whitelist"];
 	}
-	return self;
+//	return self;
 }
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-	[self choosePhoto];
+- (void)viewDidAppear:(BOOL)animated {
+	[super viewDidAppear:animated];
+	if (! self.didShowCamera) {
+		self.didShowCamera = YES;
+		// view needs to have shown up or we get "an empty snapshot" (?)
+		// EDIT: nope, still complaining; not clear whether it's a problem though
+//		[self performSelector:@selector(choosePhoto) withObject:nil afterDelay:0.3];
+		[self choosePhoto];
+	}
 }
 
 -(void) choosePhoto {
@@ -47,6 +70,10 @@
 	if ([UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear]) {
 		imagePickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
 		imagePickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureModePhoto;
+		// attempted fixes to "empty snapshot" message, from internet
+		// http://stackoverflow.com/questions/18890003/uiimagepickercontroller-error-snapshotting-a-view-that-has-not-been-rendered-re
+//		imagePickerController.modalPresentationStyle = UIModalPresentationFullScreen;
+//		imagePickerController.modalPresentationStyle = UIModalPresentationCurrentContext;
 	} else {
 		imagePickerController.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
 	}
@@ -54,6 +81,10 @@
 	[self presentViewController:imagePickerController
 					   animated:YES
 					 completion:nil];
+}
+
+- (IBAction)choosePhotoWasTapped:(id)sender {
+	[self choosePhoto];
 }
 
 // ================================================================
@@ -65,8 +96,8 @@
 	[self dismissViewControllerAnimated:YES completion:nil];
 	self.selectedImage = [info objectForKey:UIImagePickerControllerOriginalImage];
 	if (self.selectedImage) {
-//		[self.selectedImageView setImage:self.selectedImage];
-		[self createEventFromImage:self.selectedImage];
+		[self.selectedImageView setImage:self.selectedImage];
+		[self createEventFromImage:self.selectedImageView.image];
 	}
 }
 
@@ -90,7 +121,9 @@
 							 }
 							 completion:^(BOOL finished) {
 								 self.loadingView.hidden = YES;
-								 [self processText:text];
+								 NSString* txt = [self processText:text];
+								 NSLog(@"recognized text: %@", txt);
+								 [self presentEventEditViewControllerWithEventStore:self.eventManager.eventStore];
 							 }];
 		});
 	});
@@ -104,6 +137,58 @@
 	NSLog(@"processing text: %@", procText);
 	return procText;
 //	[self.resultsTextView setText:[tesseract recognizedText]];
+}
+
+// ================================================================
+#pragma mark Event stuff
+// ================================================================
+
+- (void)presentEventEditViewControllerWithEventStore:(EKEventStore*)eventStore
+{
+	if (!self.eventManager.eventsAccessGranted) {
+		[self requestAccessToEvents];
+	}
+	
+	EKEventEditViewController* vc = [[EKEventEditViewController alloc] init];
+	vc.eventStore = eventStore;
+	
+	EKEvent* event = [EKEvent eventWithEventStore:eventStore];
+	// Prepopulate all kinds of useful information with you event.
+	event.title = @"New Event Title";
+	event.startDate = [NSDate date];
+	event.endDate = [NSDate date];
+	event.URL = [NSURL URLWithString:@"http://www.apple.com"];
+	event.notes = @"This event has some notes";
+	event.allDay = YES;
+	vc.event = event;
+	
+	vc.editViewDelegate = self;
+	
+	[self presentViewController:vc animated:YES completion:nil];
+}
+
+-(void)requestAccessToEvents {
+	NSLog(@"requesting access to events using eventStore %@", self.eventManager.eventStore);
+	[self.eventManager.eventStore requestAccessToEntityType:EKEntityTypeEvent
+												 completion:^(BOOL granted, NSError *error) {
+		if (error == nil) {
+			NSLog(@"was granted access? %d", granted);
+			// Store the returned granted value.
+			self.eventManager.eventsAccessGranted = granted;
+		} else{
+			NSLog(@"%@", [error localizedDescription]);
+		}
+	}];
+	NSLog(@"finished requesting access to events");
+}
+
+#pragma EKEventEditViewDelegate
+
+- (void)eventEditViewController:(EKEventEditViewController*)controller
+		  didCompleteWithAction:(EKEventEditViewAction)action
+{
+	[controller dismissViewControllerAnimated:YES completion:nil];
+	//    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end
